@@ -4,15 +4,15 @@ from crewai import Agent, LLM
 base_url = os.getenv("CREW_BASE_URL")
 
 if base_url:
-    # Local development Ollama
+    # Local development — Ollama
     llm = LLM(
-        model=os.getenv("CREW_MODEL", "openai/gpt-oss-20b"),
+        model=os.getenv("CREW_MODEL", "ollama/llama3.2:3b"),
         base_url=base_url,
     )
 else:
-    # Production
+    # Production — Groq
     llm = LLM(
-        model=os.getenv("CREW_MODEL", "llama-3.1-8b-instant"),
+        model=os.getenv("CREW_MODEL", "openai/openai/gpt-oss-20b"),
         base_url="https://api.groq.com/openai/v1",
         api_key=os.getenv("CREW_API_KEY"),
         custom_openai=True,
