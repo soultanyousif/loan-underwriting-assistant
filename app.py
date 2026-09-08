@@ -1,8 +1,11 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from schemas import LoanApplication, UnderwritingResponse
 from crew.crew import run_underwriting, build_features, risk_model, get_risk_band
 
 app = FastAPI(title="Loan Underwriting Assistant")
+
+app.mount("/ui", StaticFiles(directory="static", html=True), name="ui")
 
 
 @app.get("/")

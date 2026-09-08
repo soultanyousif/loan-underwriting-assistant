@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Loan Underwriting Assistant</title>
+<style>
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    background: #0f1117;
+    color: #e6e6e6;
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  h1 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  p.subtitle {
+    color: #9a9a9a;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+  form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #b5b5b5;
+    margin-bottom: 4px;
+  }
+  input, select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: #1a1c23;
+    color: #e6e6e6;
+    box-sizing: border-box;
+  }
+  button {
+    grid-column: 1 / -1;
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    background: #4f7cff;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  button:disabled {
+    background: #555;
+    cursor: default;
+  }
+  #result {
+    margin-top: 28px;
+    padding: 18px;
+    border-radius: 8px;
+    background: #1a1c23;
+    display: none;
+  }
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .LOW { background: #1e4620; color: #7be392; }
+  .MEDIUM { background: #4a3c14; color: #f0c15c; }
+  .HIGH { background: #4a1414; color: #f06c6c; }
+  #assessment {
+    white-space: pre-wrap;
+    margin-top: 14px;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  #loading {
+    display: none;
+    color: #9a9a9a;
+    margin-top: 16px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Loan Underwriting Assistant</h1>
+<p class="subtitle">Enter applicant details to get a model-driven risk assessment and recommendation.</p>
+
+<form id="loanForm">
+  <div>
+    <label>Age</label>
+    <input type="number" id="person_age" value="35" required>
+  </div>
+  <div>
+    <label>Annual income</label>
+    <input type="number" id="person_income" value="65000" required>
+  </div>
+  <div>
+    <label>Home ownership</label>
+    <select id="person_home_ownership">
+      <option value="RENT">RENT</option>
+      <option value="MORTGAGE" selected>MORTGAGE</option>
+      <option value="OWN">OWN</option>
+      <option value="OTHER">OTHER</option>
+    </select>
+  </div>
+  <div>
+    <label>Employment length (years)</label>
+    <input type="number" id="person_emp_length" value="8" required>
+  </div>
+  <div>
+    <label>Loan purpose</label>
+    <select id="loan_intent">
+      <option value="PERSONAL">PERSONAL</option>
+      <option value="EDUCATION">EDUCATION</option>
+      <option value="MEDICAL">MEDICAL</option>
+      <option value="VENTURE">VENTURE</option>
+      <option value="HOMEIMPROVEMENT">HOMEIMPROVEMENT</option>
+      <option value="DEBTCONSOLIDATION" selected>DEBTCONSOLIDATION</option>
+    </select>
+  </div>
+  <div>
+    <label>Loan amount</label>
+    <input type="number" id="loan_amnt" value="15000" required>
+  </div>
+  <div>
+    <label>Previous default on file</label>
+    <select id="cb_person_default_on_file">
+      <option value="N" selected>No</option>
+      <option value="Y">Yes</option>
+    </select>
+  </div>
+  <div>
+    <label>Credit history length (years)</label>
+    <input type="number" id="cb_person_cred_hist_length" value="10" required>
+  </div>
+
+  <button type="submit" id="submitBtn">Assess application</button>
+</form>
+
+<div id="loading">Running the credit, risk, and underwriting agents, this can take up to 30 seconds...</div>
+
+<div id="result">
+  <div>
+    Default probability: <strong id="probValue"></strong>
+    &nbsp; Risk band: <span id="bandBadge" class="badge"></span>
+  </div>
+  <div id="assessment"></div>
+</div>
+
+<script>
+document.getElementById('loanForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const button = document.getElementById('submitBtn');
+  const loading = document.getElementById('loading');
+  const result = document.getElementById('result');
+
+  button.disabled = true;
+  loading.style.display = 'block';
+  result.style.display = 'none';
+
+  const payload = {
+    person_age: parseInt(document.getElementById('person_age').value),
+    person_income: parseFloat(document.getElementById('person_income').value),
+    person_home_ownership: document.getElementById('person_home_ownership').value,
+    person_emp_length: parseFloat(document.getElementById('person_emp_length').value),
+    loan_intent: document.getElementById('loan_intent').value,
+    loan_amnt: parseFloat(document.getElementById('loan_amnt').value),
+    cb_person_default_on_file: document.getElementById('cb_person_default_on_file').value,
+    cb_person_cred_hist_length: parseInt(document.getElementById('cb_person_cred_hist_length').value)
+  };
+
+  try {
+    const response = await fetch('/assess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error('Request failed with status ' + response.status);
+    }
+
+    const data = await response.json();
+
+    document.getElementById('probValue').textContent = (data.default_probability * 100).toFixed(1) + '%';
+    const badge = document.getElementById('bandBadge');
+    badge.textContent = data.risk_band;
+    badge.className = 'badge ' + data.risk_band;
+    document.getElementById('assessment').textContent = data.assessment;
+
+    result.style.display = 'block';
+  } catch (err) {
+    document.getElementById('assessment').textContent = 'Something went wrong: ' + err.message;
+    result.style.display = 'block';
+  } finally {
+    loading.style.display = 'none';
+    button.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
