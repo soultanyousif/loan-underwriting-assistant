@@ -1,28 +1,21 @@
 import os
 from crewai import Agent, LLM
 
-llm_kwargs = {
-    "model": os.getenv("CREW_MODEL", "ollama/llama3.2:3b"),
-    "api_key": os.getenv("CREW_API_KEY"),
-}
-
 base_url = os.getenv("CREW_BASE_URL")
+
 if base_url:
-    llm_kwargs["base_url"] = base_url
-
-llm = LLM(**llm_kwargs)
-
-credit_analyst = Agent(
-    role="Credit Analyst",
-    goal="Calculate the applicant's key financial ratios and summarize their affordability",
-    backstory=(
-        "You are a credit analyst at a lending institution. You review loan applications "
-        "and compute standard financial ratios such as debt-to-income and loan-to-income "
-        "to assess whether an applicant can reasonably afford the loan."
-    ),
-    llm=llm,
-    verbose=True
-)
+    # Local development Ollama
+    llm = LLM(
+        model=os.getenv("CREW_MODEL", "ollama/llama3.2:3b"),
+        base_url=base_url,
+    )
+else:
+    llm = LLM(
+        model=os.getenv("CREW_MODEL", "llama-3.1-8b-instant"),
+        base_url="https://api.groq.com/openai/v1",
+        api_key=os.getenv("CREW_API_KEY"),
+        custom_openai=True,
+    )
 
 risk_analyst = Agent(
     role="Risk Analyst",
