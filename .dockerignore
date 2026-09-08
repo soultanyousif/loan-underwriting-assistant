@@ -1,0 +1,6 @@
+notebook/
+data/
+.git
+__pycache__/
+*.pyc
+.env
