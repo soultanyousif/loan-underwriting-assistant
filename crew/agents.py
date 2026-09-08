@@ -6,7 +6,7 @@ base_url = os.getenv("CREW_BASE_URL")
 if base_url:
     # Local development Ollama
     llm = LLM(
-        model=os.getenv("CREW_MODEL", "ollama/llama3.2:3b"),
+        model=os.getenv("CREW_MODEL", "openai/gpt-oss-20b"),
         base_url=base_url,
     )
 else:
