@@ -1,12 +1,16 @@
 import os
 from crewai import Agent, LLM
 
+llm_kwargs = {
+    "model": os.getenv("CREW_MODEL", "ollama/llama3.2:3b"),
+    "api_key": os.getenv("CREW_API_KEY"),
+}
 
-llm = LLM(
-    model=os.getenv("CREW_MODEL", "ollama/llama3.2:3b"),
-    base_url=os.getenv("CREW_BASE_URL", "http://localhost:11434"),
-    api_key=os.getenv("CREW_API_KEY")
-)
+base_url = os.getenv("CREW_BASE_URL")
+if base_url:
+    llm_kwargs["base_url"] = base_url
+
+llm = LLM(**llm_kwargs)
 
 credit_analyst = Agent(
     role="Credit Analyst",
